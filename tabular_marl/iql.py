@@ -61,11 +61,11 @@ class IQL:
             for _, a_s in zip(obss, self.action_spaces):
                 actions.append(random.randint(0, a_s.n -1))
         else:
-            for obs, a_s in zip(obss, self.action_spaces):
-                q_vals = np.zeros(self.num_agents)
+            for obs, a_s, i in zip(obss, self.action_spaces, range(self.num_agents)):
+                q_vals = np.zeros(a_s.n)
 
-                for i in range(a_s.n):
-                    q_vals[i] = self.q_tables[i][str((obs, i))]
+                for a in range(a_s.n):
+                    q_vals[a] = self.q_tables[i][str((obs, i))]
 
                 actions.append(int(np.argmax(q_vals)))
         return actions
@@ -91,8 +91,17 @@ class IQL:
         """
         ### PUT YOUR CODE HERE ###
 
-        for i, obs, act, r, n_obs in zip(range(self.num_agents), obss, actions, rewards, n_obss):
-            target = r + int(done) * self.q_tables[i][str((n_obs, act))] - self.q_tables[i][str((obs, act))]
+        for i, obs, act, r, n_obs, a_s in zip(range(self.num_agents), obss, actions, rewards, n_obss, self.action_spaces):
+            
+            max_index = None
+            max_value = None
+            for a in range(a_s.n):
+                q = self.q_tables[i][str((n_obs, a))]
+                if max_value is None or max_value < q:
+                    max_value = q
+                    max_index = a
+
+            target = r + (1-int(done)) * self.q_tables[i][str((n_obs, max_index))]
             self.q_tables[i][str((obs, act))]+= self.learning_rate * (target - self.q_tables[i][str((obs, act))])
 
 
